@@ -40,13 +40,13 @@ frame.pack()
 direction_offset = {'Left' :(-1,0), 'Right':(1,0) , 'Up':(0,-1), 'Down':(0,1)} # (x,y) = (column,row)
 
 # dictionary of images for the display of the warehouse
-image_dict={'wall':tk.PhotoImage(file=os.path.join(app_root_folder, 'images/wall.gif')),
-                 'target':tk.PhotoImage(file=os.path.join(app_root_folder, 'images/hole.gif')),
-                 'box_on_target':tk.PhotoImage(file=os.path.join(app_root_folder, 'images/crate-in-hole.gif')),
-                 'box':tk.PhotoImage(file=os.path.join(app_root_folder, 'images/crate.gif')),
-                 'worker':tk.PhotoImage(file=os.path.join(app_root_folder, 'images/player.gif')),
-                 'smiley':tk.PhotoImage(file=os.path.join(app_root_folder, 'images/smiley.gif')),
-                 'worker_on_target':tk.PhotoImage(file=os.path.join(app_root_folder, 'images/player-in-hole.gif')),
+image_dict={'wall':tk.PhotoImage(file=os.path.join(app_root_folder, '/Users/don/GitHub/Intelligent-Search-Motion-Planning-in-a-Warehouse/assignment_1_code/images/wall.gif')),
+                 'target':tk.PhotoImage(file=os.path.join(app_root_folder, '/Users/don/GitHub/Intelligent-Search-Motion-Planning-in-a-Warehouse/assignment_1_code/images/hole.gif')),
+                 'box_on_target':tk.PhotoImage(file=os.path.join(app_root_folder, '/Users/don/GitHub/Intelligent-Search-Motion-Planning-in-a-Warehouse/assignment_1_code/images/crate-in-hole.gif')),
+                 'box':tk.PhotoImage(file=os.path.join(app_root_folder, '/Users/don/GitHub/Intelligent-Search-Motion-Planning-in-a-Warehouse/assignment_1_code/images/crate.gif')),
+                 'worker':tk.PhotoImage(file=os.path.join(app_root_folder, '/Users/don/GitHub/Intelligent-Search-Motion-Planning-in-a-Warehouse/assignment_1_code/images/player.gif')),
+                 'smiley':tk.PhotoImage(file=os.path.join(app_root_folder, '/Users/don/GitHub/Intelligent-Search-Motion-Planning-in-a-Warehouse/assignment_1_code/images/smiley.gif')),
+                 'worker_on_target':tk.PhotoImage(file=os.path.join(app_root_folder, '/Users/don/GitHub/Intelligent-Search-Motion-Planning-in-a-Warehouse/assignment_1_code/images/player-in-hole.gif')),
                  }
 
 
@@ -323,7 +323,7 @@ To print help on the console: press the 'h' key
 root_window.title('Weighted Sokoban')
 root_window.iconphoto(
     False, 
-    tk.PhotoImage(file=os.path.join(app_root_folder, 'images/crate.gif'))
+    tk.PhotoImage(file=os.path.join(app_root_folder, '/Users/don/GitHub/Intelligent-Search-Motion-Planning-in-a-Warehouse/assignment_1_code/images/crate.gif'))
     )
 
 

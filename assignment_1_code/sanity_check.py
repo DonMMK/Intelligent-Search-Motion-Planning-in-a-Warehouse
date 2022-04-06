@@ -28,8 +28,8 @@ except ModuleNotFoundError:
     
 def test_taboo_cells():
     wh = Warehouse()
-    wh.load_warehouse("./warehouses/warehouse_01.txt")
-    expected_answer = '####  \n#X #  \n#  ###\n#   X#\n#   X#\n#XX###\n####  '
+    wh.load_warehouse("/Users/don/GitHub/Intelligent-Search-Motion-Planning-in-a-Warehouse/assignment_1_code/warehouses/warehouse_09.txt")
+    expected_answer = '##### \n#. X##\n#X  X#\n##X  #\n ##X #\n  ##.#\n   ###'
     answer = taboo_cells(wh)
     fcn = test_taboo_cells    
     print('<<  Testing {} >>'.format(fcn.__name__))
@@ -37,12 +37,12 @@ def test_taboo_cells():
         print(fcn.__name__, ' passed!  :-)\n')
     else:
         print(fcn.__name__, ' failed!  :-(\n')
-        print('Expected ');print(expected_answer)
+        print('Manually Computed Expected ');print(expected_answer)
         print('But, received ');print(answer)
         
 def test_check_elem_action_seq():
     wh = Warehouse()
-    wh.load_warehouse("./warehouses/warehouse_01.txt")
+    wh.load_warehouse("/Users/don/GitHub/Intelligent-Search-Motion-Planning-in-a-Warehouse/assignment_1_code/warehouses/warehouse_09.txt")
     # first test
     answer = check_elem_action_seq(wh, ['Right', 'Right','Down'])
     expected_answer = '####  \n# .#  \n#  ###\n#*   #\n#  $@#\n#  ###\n####  '
@@ -93,7 +93,6 @@ def test_solve_weighted_sokoban():
 if __name__ == "__main__":
     pass    
 #    print(my_team())  # should print your team
-
     test_taboo_cells() 
-    test_check_elem_action_seq()
-    test_solve_weighted_sokoban()
+    #test_check_elem_action_seq()
+    #test_solve_weighted_sokoban()
