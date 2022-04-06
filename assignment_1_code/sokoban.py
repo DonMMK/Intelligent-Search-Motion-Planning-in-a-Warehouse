@@ -231,7 +231,7 @@ class Warehouse:
     
 if __name__ == "__main__":
     wh = Warehouse()
-    wh.load_warehouse("./warehouses/warehouse_03.txt")
+    wh.load_warehouse("/Users/don/GitHub/Intelligent-Search-Motion-Planning-in-a-Warehouse/assignment_1_code/warehouses/warehouse_09.txt")
 
     print(wh)   # this calls    wh.__str__()
 
