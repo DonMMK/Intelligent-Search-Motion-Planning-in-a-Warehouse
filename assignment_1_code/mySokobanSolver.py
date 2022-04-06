@@ -42,8 +42,7 @@ def my_team():
     of triplet of the form (student_number, first_name, last_name)
     
     '''
-#    return [ (1234567, 'Ada', 'Lovelace'), (1234568, 'Grace', 'Hopper'), (1234569, 'Eva', 'Tardos') ]
-    raise NotImplementedError()
+    return [ (10624937, 'Adrian', 'Ash'), (10454012, 'Chiran', 'Walisundara'), (10496262, 'Don', 'Kaluarachchi') ]
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -73,9 +72,41 @@ def taboo_cells(warehouse):
        The returned string should NOT have marks for the worker, the targets,
        and the boxes.  
     '''
-    ##         "INSERT YOUR CODE HERE"    
-    raise NotImplementedError()
+    ##         "INSERT YOUR CODE HERE"   
+    print("The warehouse object as a string is \n",warehouse.__str__() )
+    #print("The object ware house is \n",warehouse)
+    #print("The type of the object ware house is \n",type(warehouse))
+    
+    #raise NotImplementedError()
+    WarehouseString = warehouse.__str__()
+    ColumnsWarehouse = warehouse.ncols
+    RowWarehouse = warehouse.nrows
+    print("The rows of the warehouse is \n",RowWarehouse)
+    print("The columns of the warehouse is \n",ColumnsWarehouse)
+    
+    TwoDWarehouse = WarehouseString.split("\n")
+    print("The two dimensional warehouse is \n",TwoDWarehouse)
 
+    for x in range(RowWarehouse):
+        for y in range(ColumnsWarehouse):
+            if TwoDWarehouse[x][y] == '@' or TwoDWarehouse[x][y] == '!':
+                PlayerLocation = [x+1,y+1]
+                
+        TwoDWarehouse[x] = TwoDWarehouse[x].replace('$',' ')
+        TwoDWarehouse[x] = TwoDWarehouse[x].replace('@',' ')  
+        
+        TwoDWarehouse[x] = TwoDWarehouse[x].replace('!','.')
+        TwoDWarehouse[x] = TwoDWarehouse[x].replace('*','.')                  
+            
+    print("The 2D warehouse is \n",TwoDWarehouse)
+    print("The player location is \n",PlayerLocation)
+    
+    
+            
+                
+            
+        
+    
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 
@@ -173,4 +204,3 @@ def solve_weighted_sokoban(warehouse):
 
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
