@@ -31,7 +31,8 @@ Last modified by 2022-03-27  by f.maire@qut.edu.au
 # with these files
 import search 
 import sokoban
-
+from search import Problem, Node, FIFOQueue
+import itertools
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -45,6 +46,92 @@ def my_team():
     return [ (10624937, 'Adrian', 'Ash'), (10454012, 'Chiran', 'Walisundara'), (10496262, 'Don', 'Kaluarachchi') ]
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+def taboo_graph_search(problem, frontier):
+    """
+    Search through the successors of a problem to find a goal.
+    The argument frontier should be an empty queue.
+    If two paths reach a state, only use the first one. [Fig. 3.7]
+    Return
+        the node of the first goal state found
+        or None is no goal state is found
+    """
+    assert isinstance(problem, Problem)
+    frontier.append(Node(problem.initial))
+    explored = set() # initial empty set of explored states
+    while frontier:
+        node = frontier.pop()
+        explored.add(node.state)
+        # Python note: next line uses of a generator
+        frontier.extend(child for child in node.expand(problem)
+                        if child.state not in explored
+                        and child not in frontier)
+    return explored
+
+class WarehouseTaboo(search.Problem):
+
+    def __init__(self, warehouseString, initial):
+        self.warehouseString = warehouseString
+        self.initial = initial
+        self.warehouseString = tuple(self.warehouseString)
+        self.initial = tuple(self.initial)
+
+    def actions(self, state):
+        # player position = intial state [~][~]
+        # self ('##### ', '#.  ##', '#    #', '##   #', ' ##  #', '  ##.#', '   ###')
+        position_x = state[0]
+        position_y = state[1]
+        L = []  # list of legal actions
+        # UP: if blank not on top row, swap it with tile above it
+        if self.warehouseString[position_x+1][ position_y] != '#':
+            L.append("D")
+
+        # DOWN: If blank not on bottom row, swap it with tile below it
+        if self.warehouseString[position_x-1][position_y] != '#':
+            L.append("U")
+
+        # LEFT: If blank not in left column, swap it with tile to the left
+        if self.warehouseString[position_x][position_y-1] != '#':
+            L.append("L")
+
+        # RIGHT: If blank not on right column, swap it with tile to the right
+        if self.warehouseString[position_x][position_y+1] != '#':
+            L.append("R")
+
+        #NOTE: TESTING
+        # if(len(L) <= 0):
+        #     print("fail")
+        # print(L)
+
+        return L
+
+    def result(self, state, action):
+        # index of the blank
+        next_state = list(state)  # Note that  next_state = state   would simply create an alias
+        position_x = state[0]
+        position_y = state[1]
+        #print(action)
+        #print(self.actions(state))
+        assert action in self.actions(state)  # defensive programming!
+        # UP: if blank not on top row, swap it with tile above it
+        
+        if action == 'U':
+            x_new = position_x-1
+            next_state[0] = x_new
+        # DOWN: If blank not on bottom row, swap it with tile below it
+        if action == 'D':
+            x_new = position_x+1
+            next_state[0] = x_new
+        # LEFT: If blank not in left column, swap it with tile to the left
+        if action == 'L':
+            y_new = position_y-1
+            next_state[1] = y_new
+        # RIGHT: If blank not on right column, swap it with tile to the right
+        if action == 'R':
+            y_new = position_y+1
+            next_state[1] = y_new
+        return tuple(next_state)  # use tuple to make the state hashable
+
+
 
 
 def taboo_cells(warehouse):
@@ -73,7 +160,8 @@ def taboo_cells(warehouse):
        and the boxes.  
     '''
     ##         "INSERT YOUR CODE HERE"   
-    print("The warehouse object as a string is \n",warehouse.__str__() )
+    print(warehouse.__str__())
+    #"The warehouse object as a string is\n",
     #print("The object ware house is \n",warehouse)
     #print("The type of the object ware house is \n",type(warehouse))
     
@@ -90,7 +178,7 @@ def taboo_cells(warehouse):
     for x in range(RowWarehouse):
         for y in range(ColumnsWarehouse):
             if TwoDWarehouse[x][y] == '@' or TwoDWarehouse[x][y] == '!':
-                PlayerLocation = [x+1,y+1]
+                PlayerLocation = [x,y]
                 
         TwoDWarehouse[x] = TwoDWarehouse[x].replace('$',' ')
         TwoDWarehouse[x] = TwoDWarehouse[x].replace('@',' ')  
@@ -100,13 +188,99 @@ def taboo_cells(warehouse):
             
     print("The 2D warehouse is \n",TwoDWarehouse)
     print("The player location is \n",PlayerLocation)
+    finalString = "\n".join(TwoDWarehouse)
+    # for x in TwoDWarehouse:
+    #     TwoDWarehouse.append
+    print(finalString)
+    #"The final warehouse when joined is\n"
+    wh = WarehouseTaboo(warehouseString=TwoDWarehouse, initial=PlayerLocation)
     
+    #NOTE: TESTING
+    # wh.actions(state=PlayerLocation)
+    # #print(wh.initial)
+    # print("Here")
+    # #wh.result(state=PlayerLocation, action='U')
+    # print(wh.result(state=PlayerLocation, action='U'))
+    # print(wh.result(state=PlayerLocation, action='R'))
+    explored = taboo_graph_search(problem = wh, frontier = FIFOQueue())
+    tabooCells = []
+    for openCell in explored:
+        x = openCell[0]
+        y = openCell[1]
+        if TwoDWarehouse[x][y] != '.':
+            if TwoDWarehouse[x+1][y] == '#' or TwoDWarehouse[x-1][y] == '#':
+                if TwoDWarehouse[x][y+1] == '#' or TwoDWarehouse[x][y-1] == '#':
+                    tabooCells.append(openCell)
     
-            
-                
-            
+    print("This is explored cells",explored)
+    print("This is taboo cells",tabooCells)
+
+    combinationTaboo = itertools.combinations(tabooCells, 2)
+    checkInbetween = []
+    for x in combinationTaboo:
+        left = x[0]
+        right = x[1]
+
+        if left[0] == right[0]:
+            if left[1] < right[1]:
+                checkInbetween.append(x)
+            else:
+                checkInbetween.append((right, left))
+        if left[1] == right[1]:
+            if left[0] < right[0]:
+                checkInbetween.append(x)
+            else:
+                checkInbetween.append((right, left))
+
+    #print("This is the focus", checkInbetween)
+    choosenCheckInbetween = []
+    for x in checkInbetween:
+        left = x[0]
+        right = x[1]
+        if left[0] == right[0]:
+            boolean = 0
+            row = left[0]
+            for col in range(left[1], right[1]):
+                #check if this is goal state
+                #check if this has one wall
+                if TwoDWarehouse[row][col] == '.':
+                    boolean = 1
+                    break
+                if TwoDWarehouse[row+1][col] != "#" or TwoDWarehouse[row-1][col] != "#" or TwoDWarehouse[row][col+1] != "#" or TwoDWarehouse[row][col-1] != "#":
+                    boolean = 1
+                    break
+            if boolean == 0:
+                choosenCheckInbetween.append(x)
+
+        if left[1] == right[1]:
+            boolean = 0
+            col = left[1]
+            for row in range(left[1], right[1]):
+                #check if this is goal state
+                #check if this has one wall
+                if TwoDWarehouse[row][col] == '.':
+                    boolean = 1
+                    break
+                if TwoDWarehouse[row+1][col] != "#" or TwoDWarehouse[row-1][col] != "#" or TwoDWarehouse[row][col+1] != "#" or TwoDWarehouse[row][col-1] != "#":
+                    boolean = 1
+                    break
+            if boolean == 0:
+                choosenCheckInbetween.append(x)
+
+    for x in choosenCheckInbetween:
+        left = x[0]
+        right = x[1]
+        if left[0] == right[0]:
+            row = left[0]
+            for col in range(left[1]+1, right[1]):
+                tabooCells.append((row,col))
+        if left[1] == right[1]:
+            col = left[1]
+            for row in range(left[0]+1, right[0]):
+                tabooCells.append((row,col))
+
+    print("This is THE FOCUS", tabooCells)
         
-    
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 

@@ -28,8 +28,9 @@ except ModuleNotFoundError:
     
 def test_taboo_cells():
     wh = Warehouse()
-    wh.load_warehouse("/Users/don/GitHub/Intelligent-Search-Motion-Planning-in-a-Warehouse/assignment_1_code/warehouses/warehouse_09.txt")
-    expected_answer = '##### \n#. X##\n#X  X#\n##X  #\n ##X #\n  ##.#\n   ###'
+    wh.load_warehouse("/Users/don/GitHub/Intelligent-Search-Motion-Planning-in-a-Warehouse/assignment_1_code/warehouses/warehouse_03.txt")
+    #expected_answer = '##### \n#. X##\n#X  X#\n##X  #\n ##X #\n  ##.#\n   ###' #NOTE: Text file - warehouse_09
+    expected_answer = '  ####   \n###  ####\n#       #\n# #  #  #\n# . .#  #\n#########' #NOTE: Text file - warehouse_03
     answer = taboo_cells(wh)
     fcn = test_taboo_cells    
     print('<<  Testing {} >>'.format(fcn.__name__))
