@@ -33,6 +33,7 @@ import search
 import sokoban
 from search import Problem, Node, FIFOQueue
 import itertools
+import time
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -56,7 +57,7 @@ def taboo_graph_search(problem, frontier):
         or None is no goal state is found
     """
     assert isinstance(problem, Problem)
-    frontier.append(Node(problem.initial))
+    frontier.append(Node(problem.initial["playerLocation"]))
     explored = set() # initial empty set of explored states
     while frontier:
         node = frontier.pop()
@@ -68,12 +69,20 @@ def taboo_graph_search(problem, frontier):
     return explored
 
 class WarehouseTaboo(search.Problem):
+    """
+    Need explaination
 
+    @param warehouse: 
+        with these
+
+    @return
+       and these
+    """
     def __init__(self, warehouseString, initial):
         self.warehouseString = warehouseString
-        self.initial = initial
+        self.playerLocation = initial
         self.warehouseString = tuple(self.warehouseString)
-        self.initial = tuple(self.initial)
+        self.playerLocation = tuple(self.playerLocation)
 
     def actions(self, state):
         # player position = intial state [~][~]
@@ -159,115 +168,124 @@ def taboo_cells(warehouse):
        The returned string should NOT have marks for the worker, the targets,
        and the boxes.  
     '''
-    ##         "INSERT YOUR CODE HERE"   
+
     print(warehouse.__str__())
     #"The warehouse object as a string is\n",
     #print("The object ware house is \n",warehouse)
     #print("The type of the object ware house is \n",type(warehouse))
+    warehouseString = warehouse.__str__()
+    columnsWarehouse = warehouse.ncols
+    rowWarehouse = warehouse.nrows
+    print("The rows of the warehouse is \n",rowWarehouse)
+    print("The columns of the warehouse is \n",columnsWarehouse)
     
-    #raise NotImplementedError()
-    WarehouseString = warehouse.__str__()
-    ColumnsWarehouse = warehouse.ncols
-    RowWarehouse = warehouse.nrows
-    print("The rows of the warehouse is \n",RowWarehouse)
-    print("The columns of the warehouse is \n",ColumnsWarehouse)
-    
-    TwoDWarehouse = WarehouseString.split("\n")
-    print("The two dimensional warehouse is \n",TwoDWarehouse)
+    twoDWarehouse = warehouseString.split("\n")
+    print("The two dimensional warehouse is \n",twoDWarehouse)
 
-    for x in range(RowWarehouse):
-        for y in range(ColumnsWarehouse):
-            if TwoDWarehouse[x][y] == '@' or TwoDWarehouse[x][y] == '!':
-                PlayerLocation = [x,y]
-                
-        TwoDWarehouse[x] = TwoDWarehouse[x].replace('$',' ')
-        TwoDWarehouse[x] = TwoDWarehouse[x].replace('@',' ')  
+    playerLocation = warehouse.worker
+    #boxLocations = warehouse.boxes
+    #weights = warehouse.weights
+    wallLocations = warehouse.walls
+    goalLocations = warehouse.targets
+    
+    goalLocations = [x[::-1] for x in goalLocations]
+    playerLocation = playerLocation[::-1]
+    #boxLocations = [x[::-1] for x in boxLocations]
+    wallLocations = [x[::-1] for x in wallLocations]
+
+
+
+    for x in range(rowWarehouse):                
+        twoDWarehouse[x] = twoDWarehouse[x].replace('$',' ')
+        twoDWarehouse[x] = twoDWarehouse[x].replace('@',' ')  
         
-        TwoDWarehouse[x] = TwoDWarehouse[x].replace('!','.')
-        TwoDWarehouse[x] = TwoDWarehouse[x].replace('*','.')                  
+        twoDWarehouse[x] = twoDWarehouse[x].replace('!',' ')
+        twoDWarehouse[x] = twoDWarehouse[x].replace('*',' ')
+        twoDWarehouse[x] = twoDWarehouse[x].replace('.',' ')                       
             
-    print("The 2D warehouse is \n",TwoDWarehouse)
-    print("The player location is \n",PlayerLocation)
-    finalString = "\n".join(TwoDWarehouse)
-    # for x in TwoDWarehouse:
-    #     TwoDWarehouse.append
-    print(finalString)
+    print("The 2D warehouse is \n",twoDWarehouse)
+    print("The player location is \n",playerLocation)
+    returnString = "\n".join(twoDWarehouse)
+    # for x in twoDWarehouse:
+    #     twoDWarehouse.append
+    print(returnString)
     #"The final warehouse when joined is\n"
-    wh = WarehouseTaboo(warehouseString=TwoDWarehouse, initial=PlayerLocation)
+    wh = SokobanPuzzle(warehouse=warehouse)
     
     #NOTE: TESTING
-    # wh.actions(state=PlayerLocation)
+    # wh.actions(state=playerLocation)
     # #print(wh.initial)
     # print("Here")
-    # #wh.result(state=PlayerLocation, action='U')
-    # print(wh.result(state=PlayerLocation, action='U'))
-    # print(wh.result(state=PlayerLocation, action='R'))
+    # #wh.result(state=playerLocation, action='U')
+    # print(wh.result(state=playerLocation, action='U'))
+    # print(wh.result(state=playerLocation, action='R'))
+    
     explored = taboo_graph_search(problem = wh, frontier = FIFOQueue())
+
     tabooCells = []
     for openCell in explored:
         x = openCell[0]
         y = openCell[1]
-        if TwoDWarehouse[x][y] != '.':
-            if TwoDWarehouse[x+1][y] == '#' or TwoDWarehouse[x-1][y] == '#':
-                if TwoDWarehouse[x][y+1] == '#' or TwoDWarehouse[x][y-1] == '#':
+        if (x,y) not in goalLocations:
+            if (x+1, y) in wallLocations or (x-1, y) in wallLocations:
+                if (x, y+1) in wallLocations or (x, y-1) in wallLocations:
                     tabooCells.append(openCell)
     
-    print("This is explored cells",explored)
-    print("This is taboo cells",tabooCells)
+    print("This is explored cells", explored)
+    print("This is taboo cells", tabooCells)
 
-    combinationTaboo = itertools.combinations(tabooCells, 2)
-    checkInbetween = []
-    for x in combinationTaboo:
+    combinationOfCorners = itertools.combinations(tabooCells, 2)
+    sameLineCorners = []
+    # get a list of all the corner combinations that are on the same column or row
+    for x in combinationOfCorners:
         left = x[0]
         right = x[1]
-
         if left[0] == right[0]:
+            #ensure the lowest number is positioned on the left for next section
             if left[1] < right[1]:
-                checkInbetween.append(x)
+                sameLineCorners.append(x)
             else:
-                checkInbetween.append((right, left))
+                sameLineCorners.append((right, left))
         if left[1] == right[1]:
             if left[0] < right[0]:
-                checkInbetween.append(x)
+                sameLineCorners.append(x)
             else:
-                checkInbetween.append((right, left))
+                sameLineCorners.append((right, left))
 
-    #print("This is the focus", checkInbetween)
-    choosenCheckInbetween = []
-    for x in checkInbetween:
+    inbetweenTabooCorners = []
+    # get a list of all the corner combinations that have taboo cells between them
+    for x in sameLineCorners:
         left = x[0]
         right = x[1]
+        # on same row
         if left[0] == right[0]:
             boolean = 0
             row = left[0]
+            #check all inbetween if they are a goal state or have atleast one wall adjacent 
             for col in range(left[1], right[1]):
-                #check if this is goal state
-                #check if this has one wall
-                if TwoDWarehouse[row][col] == '.':
+                if (row,col) in goalLocations:
                     boolean = 1
                     break
-                if TwoDWarehouse[row+1][col] != "#" or TwoDWarehouse[row-1][col] != "#" or TwoDWarehouse[row][col+1] != "#" or TwoDWarehouse[row][col-1] != "#":
+                if (row+1, col) not in wallLocations and (row-1, col) not in wallLocations and (row, col+1) not in wallLocations and (row, col-1) not in wallLocations:
                     boolean = 1
                     break
             if boolean == 0:
-                choosenCheckInbetween.append(x)
-
+                inbetweenTabooCorners.append(x)
+        # on same column
         if left[1] == right[1]:
             boolean = 0
             col = left[1]
-            for row in range(left[1], right[1]):
-                #check if this is goal state
-                #check if this has one wall
-                if TwoDWarehouse[row][col] == '.':
+            for row in range(left[0], right[0]):
+                if (row,col) in goalLocations:
                     boolean = 1
                     break
-                if TwoDWarehouse[row+1][col] != "#" or TwoDWarehouse[row-1][col] != "#" or TwoDWarehouse[row][col+1] != "#" or TwoDWarehouse[row][col-1] != "#":
+                if (row+1, col) not in wallLocations and (row-1, col) not in wallLocations and (row, col+1) not in wallLocations and (row, col-1) not in wallLocations:
                     boolean = 1
                     break
             if boolean == 0:
-                choosenCheckInbetween.append(x)
+                inbetweenTabooCorners.append(x)
 
-    for x in choosenCheckInbetween:
+    for x in inbetweenTabooCorners:
         left = x[0]
         right = x[1]
         if left[0] == right[0]:
@@ -279,7 +297,21 @@ def taboo_cells(warehouse):
             for row in range(left[0]+1, right[0]):
                 tabooCells.append((row,col))
 
-    print("This is THE FOCUS", tabooCells)
+    print("This is all taboo cells", tabooCells)
+    for x in range(len(twoDWarehouse)):
+        for y in range(len(twoDWarehouse[x])):
+            if (x,y) in tabooCells:
+                twoDWarehouse[x] = twoDWarehouse[x][:y] + "X" + twoDWarehouse[x][y+1:]
+    
+    # if [4,4] in goalLocations:
+    #     print("WE ARE IN THE GOAL")
+    # else:
+    #     print("FAIL")
+
+    returnString = "\n".join(twoDWarehouse)
+    print(returnString)
+    return returnString
+    
         
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -294,27 +326,118 @@ class SokobanPuzzle(search.Problem):
     the provided module 'search.py'. 
     
     '''
-    
-    #
-    #         "INSERT YOUR CODE HERE"
-    #
-    #     Revisit the sliding puzzle and the pancake puzzle for inspiration!
-    #
-    #     Note that you will need to add several functions to 
-    #     complete this class. For example, a 'result' method is needed
-    #     to satisfy the interface of 'search.Problem'.
-    #
-    #     You are allowed (and encouraged) to use auxiliary functions and classes
+    """
+    Need explaination
 
-    
-    def __init__(self, warehouse):
-        raise NotImplementedError()
+    @param warehouse: 
+        with these
 
-    def actions(self, state):
-        """
-        Return the list of actions that can be executed in the given state.
+    @return
+       and these
+    """
+    def __init__(self, warehouse, goal=None):
+        #used for taboo cells
+        playerLocation = warehouse.worker
+        boxLocations = warehouse.boxes
+        wallLocations = warehouse.walls
+        goalLocations = warehouse.targets
+        self.weights = warehouse.weights
+        initial = {
+            "playerLocation" : playerLocation[::-1],
+            "boxLocations" :[x[::-1] for x in boxLocations]
+        }
+
+        self.goalLocations = [x[::-1] for x in goalLocations]
+        self.wallLocations = [x[::-1] for x in wallLocations]
+
+        self.initial = initial
+        self.warehouse = warehouse
+
+    def tabooCellFinder(self, warehouse):
+        warehouseString = taboo_cells(warehouse)
+        twoDWarehouse = warehouseString.split("\n")
+        tabooCellsWarehouse = []
+        for x in twoDWarehouse:
+            for y in twoDWarehouse[x]:
+                if twoDWarehouse[x][y] == "X":
+                    tabooCellsWarehouse.append((x,y))
+        self.tabooCell = tabooCellsWarehouse
+        self.tabooCell = tuple(self.tabooCell)
+
+    def actions(self, state, taboo=0):
+        # player position = intial state [~][~]
+        # self ('##### ', '#.  ##', '#    #', '##   #', ' ##  #', '  ##.#', '   ###')
+        position_x = state[0]
+        position_y = state[1]
         
-        """
+        L = []  # list of legal actions
+        # UP: if blank not on top row, swap it with tile above it
+        (position_x-1, position_y) not in self.wallLocations
+        if (position_x+1, position_y) not in self.wallLocations:
+            L.append("D")
+
+        # DOWN: If blank not on bottom row, swap it with tile below it
+        if (position_x-1, position_y) not in self.wallLocations:
+            L.append("U")
+
+        # LEFT: If blank not in left column, swap it with tile to the left
+        if (position_x, position_y+1) not in self.wallLocations:
+            L.append("R")
+
+        # RIGHT: If blank not on right column, swap it with tile to the right
+        if (position_x, position_y-1) not in self.wallLocations:
+            L.append("L")
+
+        #NOTE: TESTING
+        # if(len(L) <= 0):
+        #     print("fail")
+        # print(L)
+        return L
+
+    def result(self, state, action):
+        # index of the blank
+        next_state = list(state)  # Note that  next_state = state   would simply create an alias
+        position_x = state[0]
+        position_y = state[1]
+        #print(action)
+        #print(self.actions(state))
+        assert action in self.actions(state)  # defensive programming!
+        # UP: if blank not on top row, swap it with tile above it
+        
+        if action == 'U':
+            x_new = position_x-1
+            next_state[0] = x_new
+        # DOWN: If blank not on bottom row, swap it with tile below it
+        if action == 'D':
+            x_new = position_x+1
+            next_state[0] = x_new
+        # LEFT: If blank not in left column, swap it with tile to the left
+        if action == 'L':
+            y_new = position_y-1
+            next_state[1] = y_new
+        # RIGHT: If blank not on right column, swap it with tile to the right
+        if action == 'R':
+            y_new = position_y+1
+            next_state[1] = y_new
+        return tuple(next_state)  # use tuple to make the state hashable
+
+    def goal_test(self, state):
+        """Return True if the state is a goal. The default method compares the
+        state to self.goal, as specified in the constructor. Override this
+        method if checking against a single self.goal is not enough."""
+        return state == self.goal
+
+    def path_cost(self, c, state1, action, state2):
+        """Return the cost of a solution path that arrives at state2 from
+        state1 via action, assuming cost c to get up to state1. If the problem
+        is such that the path doesn't matter, this function will only look at
+        state2.  If the path does matter, it will consider c and maybe state1
+        and action. The default method costs 1 for every step in the path."""
+        return c + 1
+
+    def value(self, state):
+        """For optimization problems, each state has a value.  Hill-climbing
+        and related algorithms try to maximize this value."""
         raise NotImplementedError
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -342,10 +465,20 @@ def check_elem_action_seq(warehouse, action_seq):
                the sequence of actions.  This must be the same string as the
                string returned by the method  Warehouse.__str__()
     '''
-    
-    ##         "INSERT YOUR CODE HERE"
-    
-    raise NotImplementedError()
+
+    test = warehouse.worker
+    test2 = warehouse.boxes
+    test3 = warehouse.weights
+    test4 = warehouse.targets
+    test5 = warehouse.walls
+    testingFlip = [x[::-1] for x in test2]
+    print(test)
+    print(test2)
+    print(testingFlip)
+    print(test3)
+    print(test4)
+    print(test5)
+    return "Impossible"
 
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -373,8 +506,14 @@ def solve_weighted_sokoban(warehouse):
             C is the total cost of the action sequence C
 
     '''
-    
-    raise NotImplementedError()
+    warehouseString = warehouse.__str__()
+    wh = WarehouseTaboo(warehouseString=warehouseString)
+
+    result = sokoban.astar_graph_search(problem = wh, h=1)
+
+    answer, cost = result.answer, result.cost
+
+    return answer, cost
 
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
