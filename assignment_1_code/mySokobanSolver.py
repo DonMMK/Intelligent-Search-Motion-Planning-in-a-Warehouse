@@ -425,6 +425,7 @@ class SokobanPuzzle(search.Problem):
         """Return True if the state is a goal. The default method compares the
         state to self.goal, as specified in the constructor. Override this
         method if checking against a single self.goal is not enough."""
+        #set of target is equal to the set of 
         return state == self.goal
 
     def path_cost(self, c, state1, action, state2):
@@ -435,6 +436,8 @@ class SokobanPuzzle(search.Problem):
         and action. The default method costs 1 for every step in the path."""
         return c + 1
 
+    #not useful for this problem
+    #get rid 
     def value(self, state):
         """For optimization problems, each state has a value.  Hill-climbing
         and related algorithms try to maximize this value."""
