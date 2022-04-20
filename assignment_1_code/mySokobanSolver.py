@@ -329,6 +329,8 @@ class SokobanPuzzle(search.Problem):
     """
     Need explaination
 
+    h = (worker to box) + (box to goal) (how to do this is the most important question)
+
     @param warehouse: 
         with these
 
@@ -342,6 +344,9 @@ class SokobanPuzzle(search.Problem):
         wallLocations = warehouse.walls
         goalLocations = warehouse.targets
         self.weights = warehouse.weights
+        t = playerLocation[::-1]
+        a =  tuple([x[::-1] for x in boxLocations])
+        self.testInitial = (t,)+a
         initial = {
             "playerLocation" : playerLocation[::-1],
             "boxLocations" :[x[::-1] for x in boxLocations]
@@ -475,12 +480,15 @@ def check_elem_action_seq(warehouse, action_seq):
     test4 = warehouse.targets
     test5 = warehouse.walls
     testingFlip = [x[::-1] for x in test2]
-    print(test)
-    print(test2)
-    print(testingFlip)
-    print(test3)
-    print(test4)
-    print(test5)
+    #print(test)
+    #print(test2)
+    #print(testingFlip)
+    #print(test3)
+    #print(test4)
+    #print(test5)
+    wh = SokobanPuzzle(warehouse=warehouse)
+    print(wh.testInitial)
+    print(wh.initial)
     return "Impossible"
 
 
