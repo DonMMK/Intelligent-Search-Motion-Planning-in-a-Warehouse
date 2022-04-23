@@ -47,6 +47,11 @@ def my_team():
     return [ (10624937, 'Adrian', 'Ash'), (10454012, 'Chiran', 'Walisundara'), (10496262, 'Don', 'Kaluarachchi') ]
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+# class tabooNode(search.Problem):
+#     return 1
+
+
 def taboo_graph_search(problem, frontier):
     """
     Search through the successors of a problem to find a goal.
@@ -57,7 +62,7 @@ def taboo_graph_search(problem, frontier):
         or None is no goal state is found
     """
     assert isinstance(problem, Problem)
-    frontier.append(Node(problem.initial["playerLocation"]))
+    frontier.append(Node(problem.initial[0]))
     explored = set() # initial empty set of explored states
     while frontier:
         node = frontier.pop()
@@ -67,80 +72,6 @@ def taboo_graph_search(problem, frontier):
                         if child.state not in explored
                         and child not in frontier)
     return explored
-
-class WarehouseTaboo(search.Problem):
-    """
-    Need explaination
-
-    @param warehouse: 
-        with these
-
-    @return
-       and these
-    """
-    def __init__(self, warehouseString, initial):
-        self.warehouseString = warehouseString
-        self.playerLocation = initial
-        self.warehouseString = tuple(self.warehouseString)
-        self.playerLocation = tuple(self.playerLocation)
-
-    def actions(self, state):
-        # player position = intial state [~][~]
-        # self ('##### ', '#.  ##', '#    #', '##   #', ' ##  #', '  ##.#', '   ###')
-        position_x = state[0]
-        position_y = state[1]
-        L = []  # list of legal actions
-        # UP: if blank not on top row, swap it with tile above it
-        if self.warehouseString[position_x+1][ position_y] != '#':
-            L.append("D")
-
-        # DOWN: If blank not on bottom row, swap it with tile below it
-        if self.warehouseString[position_x-1][position_y] != '#':
-            L.append("U")
-
-        # LEFT: If blank not in left column, swap it with tile to the left
-        if self.warehouseString[position_x][position_y-1] != '#':
-            L.append("L")
-
-        # RIGHT: If blank not on right column, swap it with tile to the right
-        if self.warehouseString[position_x][position_y+1] != '#':
-            L.append("R")
-
-        #NOTE: TESTING
-        # if(len(L) <= 0):
-        #     print("fail")
-        # print(L)
-
-        return L
-
-    def result(self, state, action):
-        # index of the blank
-        next_state = list(state)  # Note that  next_state = state   would simply create an alias
-        position_x = state[0]
-        position_y = state[1]
-        #print(action)
-        #print(self.actions(state))
-        assert action in self.actions(state)  # defensive programming!
-        # UP: if blank not on top row, swap it with tile above it
-        
-        if action == 'U':
-            x_new = position_x-1
-            next_state[0] = x_new
-        # DOWN: If blank not on bottom row, swap it with tile below it
-        if action == 'D':
-            x_new = position_x+1
-            next_state[0] = x_new
-        # LEFT: If blank not in left column, swap it with tile to the left
-        if action == 'L':
-            y_new = position_y-1
-            next_state[1] = y_new
-        # RIGHT: If blank not on right column, swap it with tile to the right
-        if action == 'R':
-            y_new = position_y+1
-            next_state[1] = y_new
-        return tuple(next_state)  # use tuple to make the state hashable
-
-
 
 
 def taboo_cells(warehouse):
@@ -183,14 +114,11 @@ def taboo_cells(warehouse):
     print("The two dimensional warehouse is \n",twoDWarehouse)
 
     playerLocation = warehouse.worker
-    #boxLocations = warehouse.boxes
-    #weights = warehouse.weights
     wallLocations = warehouse.walls
     goalLocations = warehouse.targets
     
     goalLocations = [x[::-1] for x in goalLocations]
     playerLocation = playerLocation[::-1]
-    #boxLocations = [x[::-1] for x in boxLocations]
     wallLocations = [x[::-1] for x in wallLocations]
 
 
@@ -337,61 +265,92 @@ class SokobanPuzzle(search.Problem):
     @return
        and these
     """
-    def __init__(self, warehouse, goal=None):
+    def __init__(self, warehouse):
         #used for taboo cells
         playerLocation = warehouse.worker
         boxLocations = warehouse.boxes
         wallLocations = warehouse.walls
         goalLocations = warehouse.targets
-        self.weights = warehouse.weights
         t = playerLocation[::-1]
         a =  tuple([x[::-1] for x in boxLocations])
-        self.testInitial = (t,)+a
-        initial = {
-            "playerLocation" : playerLocation[::-1],
-            "boxLocations" :[x[::-1] for x in boxLocations]
-        }
 
+        self.weights = warehouse.weights
+        self.initial = (t,)+a
         self.goalLocations = [x[::-1] for x in goalLocations]
         self.wallLocations = [x[::-1] for x in wallLocations]
-
-        self.initial = initial
         self.warehouse = warehouse
 
-    def tabooCellFinder(self, warehouse):
-        warehouseString = taboo_cells(warehouse)
+    def tabooCellFinder(self):
+        warehouseString = taboo_cells(self.warehouse)
         twoDWarehouse = warehouseString.split("\n")
         tabooCellsWarehouse = []
         for x in twoDWarehouse:
             for y in twoDWarehouse[x]:
                 if twoDWarehouse[x][y] == "X":
                     tabooCellsWarehouse.append((x,y))
-        self.tabooCell = tabooCellsWarehouse
-        self.tabooCell = tuple(self.tabooCell)
+        self.tabooCells = tabooCellsWarehouse
+        self.tabooCells = tuple(self.tabooCell)
 
-    def actions(self, state, taboo=0):
+    def actions(self, state, taboo=1):
         # player position = intial state [~][~]
         # self ('##### ', '#.  ##', '#    #', '##   #', ' ##  #', '  ##.#', '   ###')
-        position_x = state[0]
-        position_y = state[1]
-        
+        if type(state[0]) == tuple:
+            position_x = state[0][0]
+            position_y = state[0][1]
+        else:
+            position_x = state[0]
+            position_y = state[1]
         L = []  # list of legal actions
-        # UP: if blank not on top row, swap it with tile above it
-        (position_x-1, position_y) not in self.wallLocations
-        if (position_x+1, position_y) not in self.wallLocations:
-            L.append("D")
+        
 
-        # DOWN: If blank not on bottom row, swap it with tile below it
+        # Up: If blank not on bottom row, swap it with tile below it
         if (position_x-1, position_y) not in self.wallLocations:
-            L.append("U")
+            if(position_x-1, position_y) in state[1:]:
+                if(position_x-2, position_y) not in self.wallLocations and (position_x-2, position_y) not in state[1:]:
+                    if taboo == 1:
+                        if(position_x-2, position_y) not in self.tabooCells:
+                            L.append("Up")
+                    else:
+                        L.append("Up")
+            else:
+                L.append("Up")
+            
 
-        # LEFT: If blank not in left column, swap it with tile to the left
-        if (position_x, position_y+1) not in self.wallLocations:
-            L.append("R")
+        # Down: if blank not on top row, swap it with tile above it
+        if (position_x+1, position_y) not in self.wallLocations:
+            if(position_x+1, position_y) in state[1:]:
+                if(position_x+2, position_y) not in self.wallLocations and (position_x+2, position_y) not in state[1:]:
+                    if taboo == 1:
+                        if(position_x+2, position_y) not in self.tabooCells:
+                            L.append("Down")
+                    else:
+                        L.append("Down")
+            else:
+                L.append("Down")
 
-        # RIGHT: If blank not on right column, swap it with tile to the right
+        # Left: If blank not on right column, swap it with tile to the right
         if (position_x, position_y-1) not in self.wallLocations:
-            L.append("L")
+            if(position_x, position_y-1) in state[1:]:
+                if(position_x, position_y-2) not in self.wallLocations and (position_x, position_y-2) not in state[1:]:
+                    if taboo == 1:
+                        if(position_x, position_y-2) not in self.tabooCells:
+                            L.append("Left")
+                    else:
+                        L.append("Left")
+            else:
+                L.append("Left")
+            
+        # Right: If blank not in left column, swap it with tile to the left
+        if (position_x, position_y+1) not in self.wallLocations:
+            if(position_x, position_y+1) in state[1:]:
+                if(position_x, position_y+2) not in self.wallLocations and (position_x, position_y+2) not in state[1:]:
+                    if taboo == 1:
+                        if(position_x, position_y+2) not in self.tabooCells:
+                            L.append("Right")
+                    else:
+                        L.append("Right")
+            else:
+                L.append("Right")
 
         #NOTE: TESTING
         # if(len(L) <= 0):
@@ -402,36 +361,64 @@ class SokobanPuzzle(search.Problem):
     def result(self, state, action):
         # index of the blank
         next_state = list(state)  # Note that  next_state = state   would simply create an alias
-        position_x = state[0]
-        position_y = state[1]
-        #print(action)
-        #print(self.actions(state))
+        if type(state[0]) == tuple:
+            position_x = state[0][0]
+            position_y = state[0][1]
+        else:
+            position_x = state[0]
+            position_y = state[1]
+
         assert action in self.actions(state)  # defensive programming!
-        # UP: if blank not on top row, swap it with tile above it
         
-        if action == 'U':
-            x_new = position_x-1
-            next_state[0] = x_new
+        # UP: if blank not on top row, swap it with tile above it
+        if action == 'Up':
+            if(position_x-1, position_y) in state[1:]:
+                for x in range(len(state[1:])):
+                    if next_state[x+1] == (position_x-1, position_y):
+                        next_state[x+1] = (position_x-2, position_y)
+            
+            player_location = (position_x-1, position_y)
+            next_state[0] = player_location
+        
         # DOWN: If blank not on bottom row, swap it with tile below it
-        if action == 'D':
-            x_new = position_x+1
-            next_state[0] = x_new
+        if action == 'Down':  
+            if(position_x+1, position_y) in state[1:]:
+                for x in range(len(state[1:])):
+                    if next_state[x+1] == (position_x+1, position_y):
+                        next_state[x+1] = (position_x+2, position_y)
+
+            player_location = (position_x+1, position_y)
+            next_state[0] = player_location
+
         # LEFT: If blank not in left column, swap it with tile to the left
-        if action == 'L':
-            y_new = position_y-1
-            next_state[1] = y_new
+        if action == 'Left':
+            if(position_x, position_y-1) in state[1:]:
+                for x in range(len(state[1:])):
+                    if next_state[x+1] == (position_x, position_y-1):
+                        next_state[x+1] = (position_x, position_y-2)
+
+            player_location = (position_x, position_y-1)
+            next_state[0] = player_location
+        
         # RIGHT: If blank not on right column, swap it with tile to the right
-        if action == 'R':
-            y_new = position_y+1
-            next_state[1] = y_new
+        if action == 'Right':
+            if(position_x, position_y+1) in state[1:]:
+                for x in range(len(state[1:])):
+                    if next_state[x+1] == (position_x, position_y+1):
+                        next_state[x+1] = (position_x, position_y+2)
+
+            player_location = (position_x, position_y+1)
+            next_state[0] = player_location
+
         return tuple(next_state)  # use tuple to make the state hashable
 
     def goal_test(self, state):
         """Return True if the state is a goal. The default method compares the
         state to self.goal, as specified in the constructor. Override this
         method if checking against a single self.goal is not enough."""
-        #set of target is equal to the set of 
-        return state == self.goal
+        #set of target is equal to the set of
+        currentBoxLocation = state[1:]
+        return set(currentBoxLocation) == set(self.goalLocations)
 
     def path_cost(self, c, state1, action, state2):
         """Return the cost of a solution path that arrives at state2 from
@@ -441,12 +428,15 @@ class SokobanPuzzle(search.Problem):
         and action. The default method costs 1 for every step in the path."""
         return c + 1
 
-    #not useful for this problem
-    #get rid 
-    def value(self, state):
-        """For optimization problems, each state has a value.  Hill-climbing
-        and related algorithms try to maximize this value."""
-        raise NotImplementedError
+    def h(self):
+        """Return the cost of a solution path that arrives at state2 from
+        state1 via action, assuming cost c to get up to state1. If the problem
+        is such that the path doesn't matter, this function will only look at
+        state2.  If the path does matter, it will consider c and maybe state1
+        and action. The default method costs 1 for every step in the path."""
+        h = 1
+        return h
+    
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -473,23 +463,23 @@ def check_elem_action_seq(warehouse, action_seq):
                the sequence of actions.  This must be the same string as the
                string returned by the method  Warehouse.__str__()
     '''
-
-    test = warehouse.worker
-    test2 = warehouse.boxes
-    test3 = warehouse.weights
-    test4 = warehouse.targets
-    test5 = warehouse.walls
-    testingFlip = [x[::-1] for x in test2]
-    #print(test)
-    #print(test2)
-    #print(testingFlip)
-    #print(test3)
-    #print(test4)
-    #print(test5)
     wh = SokobanPuzzle(warehouse=warehouse)
-    print(wh.testInitial)
-    print(wh.initial)
-    return "Impossible"
+
+
+    state = wh.initial
+
+    for x in action_seq:
+        L = wh.actions(state=state, taboo = 0)
+        if x in L:
+            state = wh.result(state=state, action=x)
+        else:
+            return "Impossible"
+
+    worker = state[0]
+    worker = worker[::-1]
+    boxes =  tuple([x[::-1] for x in state[1:]])
+    warehouseFinish = warehouse.copy(worker=worker, boxes=boxes, weights = wh.weights)
+    return warehouseFinish.__str__()
 
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -517,14 +507,20 @@ def solve_weighted_sokoban(warehouse):
             C is the total cost of the action sequence C
 
     '''
-    warehouseString = warehouse.__str__()
-    wh = WarehouseTaboo(warehouseString=warehouseString)
 
-    result = sokoban.astar_graph_search(problem = wh, h=1)
+    wh = SokobanPuzzle(warehouse=warehouse)
+    wh.actions(state=wh.initial)
+    wh.tabooCellFinder()
+    print(wh.tabooCells)
+    #state = ((1,3),(4,4),(4,2))
+    # result = search.astar_graph_search(problem = wh)
+    # if result == None:
+    #     return "Impossible", None
+    
+    # answer, cost = result.answer, result.cost
 
-    answer, cost = result.answer, result.cost
-
-    return answer, cost
+    #return answer, cost
+    return 1, 1
 
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
