@@ -289,12 +289,12 @@ class SokobanPuzzle(search.Problem):
         warehouseString = taboo_cells(self.warehouse)
         twoDWarehouse = warehouseString.split("\n")
         tabooCellsWarehouse = []
-        for x in twoDWarehouse:
-            for y in twoDWarehouse[x]:
+        for x in range(len(twoDWarehouse)):
+            for y in range(len(twoDWarehouse[x])):
                 if twoDWarehouse[x][y] == "X":
                     tabooCellsWarehouse.append((x,y))
         self.tabooCells = tabooCellsWarehouse
-        self.tabooCells = tuple(self.tabooCell)
+        self.tabooCells = tuple(self.tabooCells)
 
     def actions(self, state):
         # player position = intial state [~][~]
@@ -421,16 +421,28 @@ class SokobanPuzzle(search.Problem):
         is such that the path doesn't matter, this function will only look at
         state2.  If the path does matter, it will consider c and maybe state1
         and action. The default method costs 1 for every step in the path."""
-        return c + 1
+        #NOTE: Complete
+        cost = 0
+        for x in range(len(state1[1:])):
+            if state1[x+1] != state2[x+1]:
+                cost = self.weights[x]
+        return c + 1 + cost
 
-    def h(self):
-        """Return the cost of a solution path that arrives at state2 from
-        state1 via action, assuming cost c to get up to state1. If the problem
-        is such that the path doesn't matter, this function will only look at
-        state2.  If the path does matter, it will consider c and maybe state1
-        and action. The default method costs 1 for every step in the path."""
-        h = 1
-        return h
+    def h(self, n):
+        '''
+        Heuristic for goal state of the form range(k,-1,1) where k is a positive integer. 
+        h(n) = 1 + the index of the largest pancake that is still out of place
+        '''
+        #NOTE: TEST AND FIX UP - most certainly wrong at the moment
+
+        playerLocation = n.state[0]
+        boxLocation = n.state[1:]
+        goalLocation = self.goalLocations
+        
+        workerToBox = abs(playerLocation - min(boxLocation))
+        boxToGoal = abs(min(boxLocation) - min(goalLocation))
+
+        return workerToBox + boxToGoal
     
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -501,12 +513,76 @@ def solve_weighted_sokoban(warehouse):
 
     '''
 
-    wh = SokobanPuzzle(warehouse=warehouse, emptyWarehouseFlag=1)
+    wh = SokobanPuzzle(warehouse=warehouse)
+    wh.tabooCellFinder()
+    print(wh.tabooCells)
+    
+    #NOTE: Works - Test Action is Correct
     #wh.actions(state=wh.initial)
+    #print(wh.actions(state=wh.initial))
+    
+    #NOTE: Works - Check all Taboo Cells were found
     #wh.tabooCellFinder()
     #print(wh.tabooCells)
+    
+    #NOTE: Works - Check Goal test is working
+    #stateTest = ((4,1), (4, 2), (4, 4))
+    #print(wh.goalLocations)
+    #print(wh.initial[1:])
+    #print(stateTest[1:])
+    #print(wh.goal_test(stateTest))
 
-    #state = ((1,3),(4,4),(4,2))
+    #NOTE: Test Action works with path cost
+    
+    #Right
+    state1 = wh.initial
+    actions = wh.actions(state=wh.initial)
+    print(actions)
+    print("Our weights, correlate directly with our boxes")
+    print(wh.weights)
+
+    print("Moving right, note the first values changes right")
+    action = "Right"
+    state2 = wh.result(state = state1, action=action)
+    print(state1)
+    print(state2)
+    cost = wh.path_cost(c=0, state1=state1, action=action, state2=state2)
+    print("Cost:")
+    print(cost)
+
+    print("Moving right again")
+    state1 = state2
+    action = "Right"
+    state2 = wh.result(state = state1, action=action)
+    print(state1)
+    print(state2)
+    cost = wh.path_cost(c=cost, state1=state1, action=action, state2=state2)
+    print("Cost:")
+    print(cost)
+
+    print("Moving down, next to the second box")
+    state1 = state2
+    action = "Down"
+    state2 = wh.result(state = state1, action=action)
+    print(state1)
+    print(state2)
+    cost = wh.path_cost(c=cost, state1=state1, action=action, state2=state2)
+    print("Cost:")
+    print(cost)
+
+    print("Moving left and pushing the box, the cost is 1+ weight of box (which is 6)")
+    print(wh.actions(state=state2))
+    state1 = state2
+    action = "Left"
+    state2 = wh.result(state = state1, action=action)
+    print(state1)
+    print(state2)
+    cost = wh.path_cost(c=cost, state1=state1, action=action, state2=state2)
+    print("Cost:")
+    print(cost)
+
+    #print(wh.actions(state=wh.initial))
+
     # result = search.astar_graph_search(problem = wh)
     # if result == None:
     #     return "Impossible", None
