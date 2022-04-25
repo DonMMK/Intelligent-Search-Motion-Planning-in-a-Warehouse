@@ -128,6 +128,8 @@ def test_solve_weighted_sokoban():
         print('Your answer is different but it might still be correct')
         print('Check that you pushed the right box onto the left target!')
     print(f'Your cost = {cost}, expected cost = {expected_cost}')
+
+    
         
     
 

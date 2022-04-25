@@ -62,7 +62,7 @@ def taboo_graph_search(problem, frontier):
         or None is no goal state is found
     """
     assert isinstance(problem, Problem)
-    frontier.append(Node(problem.initial[0]))
+    frontier.append(Node(problem.initial))
     explored = set() # initial empty set of explored states
     while frontier:
         node = frontier.pop()
@@ -138,8 +138,7 @@ def taboo_cells(warehouse):
     #     twoDWarehouse.append
     print(returnString)
     #"The final warehouse when joined is\n"
-    wh = SokobanPuzzle(warehouse=warehouse)
-    
+    wh = SokobanPuzzle(warehouse=warehouse, emptyWarehouseFlag=1)
     #NOTE: TESTING
     # wh.actions(state=playerLocation)
     # #print(wh.initial)
@@ -151,13 +150,14 @@ def taboo_cells(warehouse):
     explored = taboo_graph_search(problem = wh, frontier = FIFOQueue())
 
     tabooCells = []
+    print(explored)
     for openCell in explored:
-        x = openCell[0]
-        y = openCell[1]
+        x = openCell[0][0]
+        y = openCell[0][1]
         if (x,y) not in goalLocations:
             if (x+1, y) in wallLocations or (x-1, y) in wallLocations:
                 if (x, y+1) in wallLocations or (x, y-1) in wallLocations:
-                    tabooCells.append(openCell)
+                    tabooCells.append(openCell[0])
     
     print("This is explored cells", explored)
     print("This is taboo cells", tabooCells)
@@ -265,20 +265,25 @@ class SokobanPuzzle(search.Problem):
     @return
        and these
     """
-    def __init__(self, warehouse):
+    def __init__(self, warehouse, emptyWarehouseFlag = 0, tabooFlag = 0):
         #used for taboo cells
         playerLocation = warehouse.worker
         boxLocations = warehouse.boxes
         wallLocations = warehouse.walls
         goalLocations = warehouse.targets
+        
         t = playerLocation[::-1]
-        a =  tuple([x[::-1] for x in boxLocations])
+        if emptyWarehouseFlag == 0:
+            a =  tuple([x[::-1] for x in boxLocations])
+            self.initial = (t,)+a
+        else:
+            self.initial = (t,)
 
         self.weights = warehouse.weights
-        self.initial = (t,)+a
         self.goalLocations = [x[::-1] for x in goalLocations]
         self.wallLocations = [x[::-1] for x in wallLocations]
         self.warehouse = warehouse
+        self.tabooFlag = tabooFlag
 
     def tabooCellFinder(self):
         warehouseString = taboo_cells(self.warehouse)
@@ -291,23 +296,19 @@ class SokobanPuzzle(search.Problem):
         self.tabooCells = tabooCellsWarehouse
         self.tabooCells = tuple(self.tabooCell)
 
-    def actions(self, state, taboo=1):
+    def actions(self, state):
         # player position = intial state [~][~]
         # self ('##### ', '#.  ##', '#    #', '##   #', ' ##  #', '  ##.#', '   ###')
-        if type(state[0]) == tuple:
-            position_x = state[0][0]
-            position_y = state[0][1]
-        else:
-            position_x = state[0]
-            position_y = state[1]
+        position_x = state[0][0]
+        position_y = state[0][1]
         L = []  # list of legal actions
         
 
-        # Up: If blank not on bottom row, swap it with tile below it
+        # Up: Write something
         if (position_x-1, position_y) not in self.wallLocations:
             if(position_x-1, position_y) in state[1:]:
                 if(position_x-2, position_y) not in self.wallLocations and (position_x-2, position_y) not in state[1:]:
-                    if taboo == 1:
+                    if self.tabooFlag != 1:
                         if(position_x-2, position_y) not in self.tabooCells:
                             L.append("Up")
                     else:
@@ -316,11 +317,11 @@ class SokobanPuzzle(search.Problem):
                 L.append("Up")
             
 
-        # Down: if blank not on top row, swap it with tile above it
+        # Down: Write something
         if (position_x+1, position_y) not in self.wallLocations:
             if(position_x+1, position_y) in state[1:]:
                 if(position_x+2, position_y) not in self.wallLocations and (position_x+2, position_y) not in state[1:]:
-                    if taboo == 1:
+                    if self.tabooFlag != 1:
                         if(position_x+2, position_y) not in self.tabooCells:
                             L.append("Down")
                     else:
@@ -328,11 +329,11 @@ class SokobanPuzzle(search.Problem):
             else:
                 L.append("Down")
 
-        # Left: If blank not on right column, swap it with tile to the right
+        # Left: Write something
         if (position_x, position_y-1) not in self.wallLocations:
             if(position_x, position_y-1) in state[1:]:
                 if(position_x, position_y-2) not in self.wallLocations and (position_x, position_y-2) not in state[1:]:
-                    if taboo == 1:
+                    if self.tabooFlag != 1:
                         if(position_x, position_y-2) not in self.tabooCells:
                             L.append("Left")
                     else:
@@ -340,11 +341,11 @@ class SokobanPuzzle(search.Problem):
             else:
                 L.append("Left")
             
-        # Right: If blank not in left column, swap it with tile to the left
+        # Right: Write something
         if (position_x, position_y+1) not in self.wallLocations:
             if(position_x, position_y+1) in state[1:]:
                 if(position_x, position_y+2) not in self.wallLocations and (position_x, position_y+2) not in state[1:]:
-                    if taboo == 1:
+                    if self.tabooFlag != 1:
                         if(position_x, position_y+2) not in self.tabooCells:
                             L.append("Right")
                     else:
@@ -361,16 +362,11 @@ class SokobanPuzzle(search.Problem):
     def result(self, state, action):
         # index of the blank
         next_state = list(state)  # Note that  next_state = state   would simply create an alias
-        if type(state[0]) == tuple:
-            position_x = state[0][0]
-            position_y = state[0][1]
-        else:
-            position_x = state[0]
-            position_y = state[1]
-
+        position_x = state[0][0]
+        position_y = state[0][1]
         assert action in self.actions(state)  # defensive programming!
         
-        # UP: if blank not on top row, swap it with tile above it
+        # UP: Write something
         if action == 'Up':
             if(position_x-1, position_y) in state[1:]:
                 for x in range(len(state[1:])):
@@ -380,7 +376,7 @@ class SokobanPuzzle(search.Problem):
             player_location = (position_x-1, position_y)
             next_state[0] = player_location
         
-        # DOWN: If blank not on bottom row, swap it with tile below it
+        # DOWN: Write something
         if action == 'Down':  
             if(position_x+1, position_y) in state[1:]:
                 for x in range(len(state[1:])):
@@ -390,7 +386,7 @@ class SokobanPuzzle(search.Problem):
             player_location = (position_x+1, position_y)
             next_state[0] = player_location
 
-        # LEFT: If blank not in left column, swap it with tile to the left
+        # LEFT: Write something
         if action == 'Left':
             if(position_x, position_y-1) in state[1:]:
                 for x in range(len(state[1:])):
@@ -400,7 +396,7 @@ class SokobanPuzzle(search.Problem):
             player_location = (position_x, position_y-1)
             next_state[0] = player_location
         
-        # RIGHT: If blank not on right column, swap it with tile to the right
+        # RIGHT: Write something
         if action == 'Right':
             if(position_x, position_y+1) in state[1:]:
                 for x in range(len(state[1:])):
@@ -409,7 +405,6 @@ class SokobanPuzzle(search.Problem):
 
             player_location = (position_x, position_y+1)
             next_state[0] = player_location
-
         return tuple(next_state)  # use tuple to make the state hashable
 
     def goal_test(self, state):
@@ -463,13 +458,11 @@ def check_elem_action_seq(warehouse, action_seq):
                the sequence of actions.  This must be the same string as the
                string returned by the method  Warehouse.__str__()
     '''
-    wh = SokobanPuzzle(warehouse=warehouse)
-
-
+    wh = SokobanPuzzle(warehouse=warehouse, tabooFlag=1)
     state = wh.initial
 
     for x in action_seq:
-        L = wh.actions(state=state, taboo = 0)
+        L = wh.actions(state=state)
         if x in L:
             state = wh.result(state=state, action=x)
         else:
@@ -508,10 +501,11 @@ def solve_weighted_sokoban(warehouse):
 
     '''
 
-    wh = SokobanPuzzle(warehouse=warehouse)
-    wh.actions(state=wh.initial)
-    wh.tabooCellFinder()
-    print(wh.tabooCells)
+    wh = SokobanPuzzle(warehouse=warehouse, emptyWarehouseFlag=1)
+    #wh.actions(state=wh.initial)
+    #wh.tabooCellFinder()
+    #print(wh.tabooCells)
+
     #state = ((1,3),(4,4),(4,2))
     # result = search.astar_graph_search(problem = wh)
     # if result == None:
