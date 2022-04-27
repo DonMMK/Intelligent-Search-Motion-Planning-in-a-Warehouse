@@ -421,7 +421,6 @@ class SokobanPuzzle(search.Problem):
         is such that the path doesn't matter, this function will only look at
         state2.  If the path does matter, it will consider c and maybe state1
         and action. The default method costs 1 for every step in the path."""
-        #NOTE: Complete
         cost = 0
         for x in range(len(state1[1:])):
             if state1[x+1] != state2[x+1]:
@@ -438,11 +437,17 @@ class SokobanPuzzle(search.Problem):
         playerLocation = n.state[0]
         boxLocation = n.state[1:]
         goalLocation = self.goalLocations
-        
-        workerToBox = abs(playerLocation - min(boxLocation))
-        boxToGoal = abs(min(boxLocation) - min(goalLocation))
+        minWorkerToBox = 999999
+        minBoxToGoal = 999999
+        for x in boxLocation:
+            workerDistance = abs(playerLocation[0] - x[0]) + abs(playerLocation[1] - x[1])
+            minWorkerToBox = min(workerDistance, minWorkerToBox)
+            for y in range(len(goalLocation)):
+                boxDistance = abs(x[0] - goalLocation[y][0]) + abs(x[1] - goalLocation[y][1])
+                boxDistance = boxDistance * self.weights[y]
+                minBoxToGoal = min(boxDistance, minBoxToGoal)
 
-        return workerToBox + boxToGoal
+        return minWorkerToBox + minBoxToGoal
     
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -515,7 +520,7 @@ def solve_weighted_sokoban(warehouse):
 
     wh = SokobanPuzzle(warehouse=warehouse)
     wh.tabooCellFinder()
-    print(wh.tabooCells)
+    #print(wh.tabooCells)
     
     #NOTE: Works - Test Action is Correct
     #wh.actions(state=wh.initial)
@@ -535,62 +540,68 @@ def solve_weighted_sokoban(warehouse):
     #NOTE: Test Action works with path cost
     
     #Right
-    state1 = wh.initial
-    actions = wh.actions(state=wh.initial)
-    print(actions)
-    print("Our weights, correlate directly with our boxes")
-    print(wh.weights)
+    # state1 = wh.initial
+    # actions = wh.actions(state=wh.initial)
+    # print(actions)
+    # print("Our weights, correlate directly with our boxes")
+    # print(wh.weights)
 
-    print("Moving right, note the first values changes right")
-    action = "Right"
-    state2 = wh.result(state = state1, action=action)
-    print(state1)
-    print(state2)
-    cost = wh.path_cost(c=0, state1=state1, action=action, state2=state2)
-    print("Cost:")
-    print(cost)
+    # print("Moving right, note the first values changes right")
+    # action = "Right"
+    # state2 = wh.result(state = state1, action=action)
+    # print(state1)
+    # print(state2)
+    # cost = wh.path_cost(c=0, state1=state1, action=action, state2=state2)
+    # print("Cost:")
+    # print(cost)
 
-    print("Moving right again")
-    state1 = state2
-    action = "Right"
-    state2 = wh.result(state = state1, action=action)
-    print(state1)
-    print(state2)
-    cost = wh.path_cost(c=cost, state1=state1, action=action, state2=state2)
-    print("Cost:")
-    print(cost)
+    # print("Moving right again")
+    # state1 = state2
+    # action = "Right"
+    # state2 = wh.result(state = state1, action=action)
+    # print(state1)
+    # print(state2)
+    # cost = wh.path_cost(c=cost, state1=state1, action=action, state2=state2)
+    # print("Cost:")
+    # print(cost)
 
-    print("Moving down, next to the second box")
-    state1 = state2
-    action = "Down"
-    state2 = wh.result(state = state1, action=action)
-    print(state1)
-    print(state2)
-    cost = wh.path_cost(c=cost, state1=state1, action=action, state2=state2)
-    print("Cost:")
-    print(cost)
+    # print("Moving down, next to the second box")
+    # state1 = state2
+    # action = "Down"
+    # state2 = wh.result(state = state1, action=action)
+    # print(state1)
+    # print(state2)
+    # cost = wh.path_cost(c=cost, state1=state1, action=action, state2=state2)
+    # print("Cost:")
+    # print(cost)
 
-    print("Moving left and pushing the box, the cost is 1+ weight of box (which is 6)")
-    print(wh.actions(state=state2))
-    state1 = state2
-    action = "Left"
-    state2 = wh.result(state = state1, action=action)
-    print(state1)
-    print(state2)
-    cost = wh.path_cost(c=cost, state1=state1, action=action, state2=state2)
-    print("Cost:")
-    print(cost)
+    # print("Moving left and pushing the box, the cost is 1+ weight of box (which is 6)")
+    # print(wh.actions(state=state2))
+    # state1 = state2
+    # action = "Left"
+    # state2 = wh.result(state = state1, action=action)
+    # print(state1)
+    # print(state2)
+    # cost = wh.path_cost(c=cost, state1=state1, action=action, state2=state2)
+    # print("Cost:")
+    # print(cost)
 
-    #print(wh.actions(state=wh.initial))
+    print(wh.actions(state=wh.initial))
 
-    # result = search.astar_graph_search(problem = wh)
-    # if result == None:
-    #     return "Impossible", None
+    result = search.astar_graph_search(problem = wh)
+    if result == None:
+        return "Impossible", None
     
-    # answer, cost = result.answer, result.cost
+    path = result.path()
+    actionsTaken = []
+    for node in path[1:]:
+        actionsTaken.append(node.action)
+    print("This is the path: ")
+    print(actionsTaken)
 
-    #return answer, cost
-    return 1, 1
+    answer, cost = actionsTaken, result.path_cost
+    
+    return answer, cost
 
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
