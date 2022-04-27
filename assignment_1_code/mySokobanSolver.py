@@ -191,7 +191,7 @@ def taboo_cells(warehouse):
             row = left[0]
             #check all inbetween if they are a goal state or have atleast one wall adjacent 
             for col in range(left[1], right[1]):
-                if (row,col) in goalLocations:
+                if (row,col) in goalLocations or (row, col) in wallLocations:
                     boolean = 1
                     break
                 if (row+1, col) not in wallLocations and (row-1, col) not in wallLocations and (row, col+1) not in wallLocations and (row, col-1) not in wallLocations:
@@ -204,7 +204,7 @@ def taboo_cells(warehouse):
             boolean = 0
             col = left[1]
             for row in range(left[0], right[0]):
-                if (row,col) in goalLocations:
+                if (row,col) in goalLocations or (row, col) in wallLocations:
                     boolean = 1
                     break
                 if (row+1, col) not in wallLocations and (row-1, col) not in wallLocations and (row, col+1) not in wallLocations and (row, col-1) not in wallLocations:
@@ -598,6 +598,10 @@ def solve_weighted_sokoban(warehouse):
         actionsTaken.append(node.action)
     print("This is the path: ")
     print(actionsTaken)
+
+    print("This is state")
+    print(result.state)
+    print(wh.goalLocations)
 
     answer, cost = actionsTaken, result.path_cost
     
