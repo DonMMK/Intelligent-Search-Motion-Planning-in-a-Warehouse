@@ -432,22 +432,24 @@ class SokobanPuzzle(search.Problem):
         Heuristic for goal state of the form range(k,-1,1) where k is a positive integer. 
         h(n) = 1 + the index of the largest pancake that is still out of place
         '''
-        #NOTE: TEST AND FIX UP - most certainly wrong at the moment
 
         playerLocation = n.state[0]
         boxLocation = n.state[1:]
         goalLocation = self.goalLocations
-        minWorkerToBox = 999999
-        minBoxToGoal = 999999
+        maxWorkerToBox = 0
+        maxBoxToGoal = 0
+        completeToGoal = 0
         for x in boxLocation:
-            workerDistance = abs(playerLocation[0] - x[0]) + abs(playerLocation[1] - x[1])
-            minWorkerToBox = min(workerDistance, minWorkerToBox)
-            for y in range(len(goalLocation)):
-                boxDistance = abs(x[0] - goalLocation[y][0]) + abs(x[1] - goalLocation[y][1])
-                boxDistance = boxDistance * self.weights[y]
-                minBoxToGoal = min(boxDistance, minBoxToGoal)
-
-        return minWorkerToBox + minBoxToGoal
+            if x not in goalLocation:
+                workerDistance = abs(playerLocation[0] - x[0]) + abs(playerLocation[1] - x[1])
+                maxWorkerToBox = min(workerDistance, maxWorkerToBox)
+                for y in range(len(goalLocation)):
+                    boxDistance = abs(x[0] - goalLocation[y][0]) + abs(x[1] - goalLocation[y][1])
+                    #boxDistance = boxDistance * self.weights[y]
+                    maxBoxToGoal = max(boxDistance, maxBoxToGoal)
+                    completeToGoal = max(completeToGoal, maxBoxToGoal + maxWorkerToBox)
+        #print(completeToGoal)
+        return completeToGoal
     
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
