@@ -441,12 +441,12 @@ class SokobanPuzzle(search.Problem):
         completeToGoal = 0
         for x in boxLocation:
             if x not in goalLocation:
-                workerDistance = abs(playerLocation[0] - x[0]) + abs(playerLocation[1] - x[1])
-                maxWorkerToBox = min(workerDistance, maxWorkerToBox)
+                workerDistance = abs(playerLocation[0] - x[0]) + abs(playerLocation[1] - x[1]) - 1
+                maxWorkerToBox = max(workerDistance, maxWorkerToBox)
                 for y in range(len(goalLocation)):
                     boxDistance = abs(x[0] - goalLocation[y][0]) + abs(x[1] - goalLocation[y][1])
                     #boxDistance = boxDistance * self.weights[y]
-                    maxBoxToGoal = max(boxDistance, maxBoxToGoal)
+                    maxBoxToGoal = min(boxDistance, maxBoxToGoal)
                     completeToGoal = max(completeToGoal, maxBoxToGoal + maxWorkerToBox)
         #print(completeToGoal)
         return completeToGoal
