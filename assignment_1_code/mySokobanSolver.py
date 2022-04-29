@@ -29,11 +29,11 @@ Last modified by 2022-03-27  by f.maire@qut.edu.au
 # You have to make sure that your code works with 
 # the files provided (search.py and sokoban.py) as your code will be tested 
 # with these files
-import search 
-import sokoban
+import search
 from search import Problem, Node, FIFOQueue
 import itertools
-import time
+import sys
+
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -43,23 +43,38 @@ def my_team():
     Return the list of the team members of this assignment submission as a list
     of triplet of the form (student_number, first_name, last_name)
     
+    @param: 
+        N/A
+
+    @return:
+       A list of the 3 members of our team:
+        - Adrian Ash: n10624937
+        - Chiran Walisundara: n10454012
+        - Don Kaluarachchi: n10496262 
+
     '''
-    return [ (10624937, 'Adrian', 'Ash'), (10454012, 'Chiran', 'Walisundara'), (10496262, 'Don', 'Kaluarachchi') ]
+    return [ (10624937, 'Adrian', 'Ash'), (10454012, 'Chiran', 'Walisundara'), 
+            (10496262, 'Don', 'Kaluarachchi') ]
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-# class tabooNode(search.Problem):
-#     return 1
-
-
 def taboo_graph_search(problem, frontier):
     """
-    Search through the successors of a problem to find a goal.
-    The argument frontier should be an empty queue.
-    If two paths reach a state, only use the first one. [Fig. 3.7]
-    Return
-        the node of the first goal state found
-        or None is no goal state is found
+    A modified graph search method that search through the successors 
+    of a problem adding the state (grid locations) of each node to an explored variable.
+
+    Used by taking a SokobanPuzzle (problem subclass) object
+    and an empty queue object.
+
+    Returns all the grid locations that are within the walls of the
+    SokobanPuzzles warehouse object.
+    
+    @params: 
+        problem - a problem (or subclass) object
+        frontier - a queue object (whether it be FIFOQueue or LIFOQueue)
+
+    @return:
+       explored - a set of all the visited states
     """
     assert isinstance(problem, Problem)
     frontier.append(Node(problem.initial))
@@ -76,28 +91,29 @@ def taboo_graph_search(problem, frontier):
 
 def taboo_cells(warehouse):
     '''  
-    Identify the taboo cells of a warehouse. A "taboo cell" is by definition
-    a cell inside a warehouse such that whenever a box get pushed on such 
-    a cell then the puzzle becomes unsolvable. 
+    A method used to discover all the taboo cells located within a warehouse object.
+    Will return a string representation of all the taboo locations and wall locations
+    marked as "#" for walls and "X" for taboo cells.
+
+    A "taboo cell" is by definition:
+        - a cell inside a warehouse such that whenever a box get pushed on such 
+        - a cell then the puzzle becomes unsolvable. 
     
     Cells outside the warehouse are not taboo. It is a fail to tag an 
-    outside cell as taboo.
+    outside cell as taboo. Additionally we will ignore all the existing boxes, 
+    only consider the walls and the target cells. 
     
-    When determining the taboo cells, you must ignore all the existing boxes, 
-    only consider the walls and the target  cells.  
-    Use only the following rules to determine the taboo cells;
-     Rule 1: if a cell is a corner and not a target, then it is a taboo cell.
-     Rule 2: all the cells between two corners along a wall are taboo if none of 
-             these cells is a target.
-    
-    @param warehouse: 
-        a Warehouse object with the worker inside the warehouse
+    With the above definition we can determine the rules are define a taboo cells as:
+        Rule 1: if a cell is a corner and not a target, then it is a taboo cell.
+        Rule 2: all the cells between two corners along a wall are taboo if none of 
+                these cells is a target.
 
-    @return
-       A string representing the warehouse with only the wall cells marked with 
-       a '#' and the taboo cells marked with a 'X'.  
-       The returned string should NOT have marks for the worker, the targets,
-       and the boxes.  
+    @params: 
+        warehouse - a Warehouse object with the worker inside the warehouse
+
+    @return:
+        returnString - A string representing the warehouse with only the wall cells marked with 
+                      a '#' and all the discovered taboo cells marked with a 'X'.  
     '''
 
     print(warehouse.__str__())
@@ -247,25 +263,44 @@ def taboo_cells(warehouse):
 class SokobanPuzzle(search.Problem):
     '''
     An instance of the class 'SokobanPuzzle' represents a Sokoban puzzle.
-    An instance contains information about the walls, the targets, the boxes
-    and the worker.
+    An instance contains information about the walls, the targets, the box weights,
+    various helper flags and the initial box locations and worker location.
 
-    Your implementation should be fully compatible with the search functions of 
-    the provided module 'search.py'. 
-    
+    This class is a subclass of the Problem class from the search file and overwrites multiple
+    functions that require unique implementations for solving the Sokoban Puzzle.
+
+    This object is compatible with multiple search algorithms that are also present in the search file
+    and which will be used to find potential solutions to a given warehouse.      
     '''
-    """
-    Need explaination
-
-    h = (worker to box) + (box to goal) (how to do this is the most important question)
-
-    @param warehouse: 
-        with these
-
-    @return
-       and these
-    """
     def __init__(self, warehouse, emptyWarehouseFlag = 0, tabooFlag = 0):
+        '''  
+        Using the Warehouse object passed into this constructor various important information is extracted
+        and set of SokobanPuzzle object variables. 
+        
+        Additionally two seperate flags are set that modify the behaviour of the objects, 
+        with emptyWarehouseFlag used by taboo_cells() and tabooFlag used by check_elem_action_seq()
+
+        This is also were the initial state is set. Will take the form of a tuple of tuples. The first
+        tuple being the location of the worker. All following tuples will represent the locations of the boxes.
+        This is our the state will be represent for the rest of the functions aswell.
+            An Example: ((4,6),(2,3),(1,2))
+                - Here the worker is located at row 4 column 6
+                - The boxes are located at rows 2 and 1 and columns 3 and 2 respectively
+                - NOTE: the rows and columns are flipped from the original warehouse object so as
+                        to match our initial taboo_cells() design. No significant reason but our own
+                        continuity 
+
+        @params: 
+            warehouse - a valid Warehouse object
+
+            emptyWarehouseFlag - a flag used for setting the initial state without box locations
+                                    - Used by taboo_cells() which does not make use of box locations
+
+            tabooFlag - a flag used by actions() to define if the taboo cells should be checked
+                        when searching are legal actions to take
+                                    - Used by check_elem_action_seq() which does not need to check taboo cells for
+                                    legal moves 
+        '''
         #used for taboo cells
         playerLocation = warehouse.worker
         boxLocations = warehouse.boxes
@@ -286,6 +321,18 @@ class SokobanPuzzle(search.Problem):
         self.tabooFlag = tabooFlag
 
     def tabooCellFinder(self):
+        '''  
+        A method used by solve_weighted_sokoban() to extract the taboo cell locations from
+        the warehouse and set them as SokobanPuzzle variables. 
+        
+        This function will make use of the taboo_cells() function to return of string of a warehouse
+        with the taboo cells defined.
+        
+        The tabooCells that are set will take the form of a tuple of tuples depicting all the taboo cells
+        grid locations.
+            An Example: ((1, 3), (2, 7), (5, 9))
+                - Here the taboo cells are located at rows 1, 2 and 5 and columns 3,7 and 9 respectively
+        '''
         warehouseString = taboo_cells(self.warehouse)
         twoDWarehouse = warehouseString.split("\n")
         tabooCellsWarehouse = []
@@ -297,6 +344,34 @@ class SokobanPuzzle(search.Problem):
         self.tabooCells = tuple(self.tabooCells)
 
     def actions(self, state):
+        '''  
+        Uses the state variable provided, which is a tuple of tuples in the same format as the 
+        initial variable set in __init__ with the first tuple defining the worker location and the following
+        tuples defining the box locations.
+
+        Given this state variable it calculates all the possible moves that the agent can perform. The behaviour of this
+        function is also modified based on if the emptyWarehouseFlag and tabooFlag were set in the constructor (__init__):
+            
+            emptyWarehouseFlag = 1 - means that state will only contain the worker location and will only search based on if the
+                                 worker will hit a wall "#" or not
+            tabooFlag = 1 - will ignore if the worker move will push a box into a taboo cell or not
+        
+        Without the flags the function will check:
+            1) will a workers movement result in hitting the wall
+            2) will a workers movement result in hitting a box
+                if so
+                2.a) will the box movement result in hitting the wall or another box
+                2.b) will the box movement in the box entering a tabooCells or not
+        
+        Depending on which above conditions are met different actions are added to L which results
+        in this function finally returning all possible moves the agent (worker) can make from there current location
+
+        @param: 
+            state - a tuple of tuples defining the worker and box locations 
+                    defined the same as the __init__ function sets initial variable
+        @return:
+            L - a list of legal actions that can be taken given the current state
+        '''
         # player position = intial state [~][~]
         # self ('##### ', '#.  ##', '#    #', '##   #', ' ##  #', '  ##.#', '   ###')
         position_x = state[0][0]
@@ -356,10 +431,27 @@ class SokobanPuzzle(search.Problem):
         #NOTE: TESTING
         # if(len(L) <= 0):
         #     print("fail")
-        # print(L)
+        #print(L)
         return L
 
     def result(self, state, action):
+        '''  
+        Uses the state and action variable provided this function will move the workers location and if the
+        action results in the worker pushing a box then the location of said box will also be moved.
+
+        It will define these changes as the next_state and will return a tuple of next_state
+
+        @params: 
+            state - a tuple of tuples defining the worker and box locations 
+            action - an single action from the list returned from the actions() function
+                        For Example: if actions() returns ['Up', 'Right']
+                                     then the action passed maybe 'Up' or 'Right' 
+        @return:
+            tuple(next_state) - a tuple representation of the next state
+                                    NOTE: the same format as all states. A tuple of tuples with the
+                                    first tuple denoting the worker location and the remaining tuples
+                                    denoting the boxes locations
+        '''
         # index of the blank
         next_state = list(state)  # Note that  next_state = state   would simply create an alias
         position_x = state[0][0]
@@ -408,46 +500,129 @@ class SokobanPuzzle(search.Problem):
         return tuple(next_state)  # use tuple to make the state hashable
 
     def goal_test(self, state):
-        """Return True if the state is a goal. The default method compares the
-        state to self.goal, as specified in the constructor. Override this
-        method if checking against a single self.goal is not enough."""
+        '''  
+        Uses the state provided return true of all the locations of the boxes are on the goalLocations
+
+        For Example -
+                   currentBoxLocations = ((4,6), (2,3))
+                   goalLocations = ((4,6), (2,3))
+                   Will return true
+
+                   Whereas
+
+                   currentBoxLocations = ((4,5), (2,3))
+                   goalLocations = ((4,6), (2,3))
+                   Will return false
+        
+        NOTE: that since we are using set representations of both currentBoxLocations and goalLocations
+              the order of the locations will not matter
+
+              For Example -
+                   currentBoxLocations = ((4,6), (2,3))
+                   goalLocations = ((2,3), (4,6))
+                   Will still return true
+        @param: 
+            state - a tuple of tuples defining the worker and box locations
+        @return:
+            result - a boolean value (true or false) denoting if the goal condition has been met
+                     Defined by all currentBoxLocation being position on all the goalLocations
+        '''
         #set of target is equal to the set of
-        currentBoxLocation = state[1:]
-        return set(currentBoxLocation) == set(self.goalLocations)
+        currentBoxLocations = state[1:]
+        result = set(currentBoxLocations) == set(self.goalLocations)
+        return result
 
     def path_cost(self, c, state1, action, state2):
-        """Return the cost of a solution path that arrives at state2 from
-        state1 via action, assuming cost c to get up to state1. If the problem
-        is such that the path doesn't matter, this function will only look at
-        state2.  If the path does matter, it will consider c and maybe state1
-        and action. The default method costs 1 for every step in the path."""
+        '''  
+        Uses the state1 and state2 we determine if a box location, stored in all the tuples of the state but the first,
+        has changed between the states and if it has then add the weight of the box to the result variable.
+
+        The result will be a combination of the cost of the previous actions up till state2 (c) + the default cost of an
+        action (1) + the cost of moving a box (if there is one)
+
+        @params:
+            c - the cost of the solution path up to state1
+            state1 - a tuple of tuples defining the worker and box locations before the action
+            action - the action taken from state1 to get to state2 
+                        NOTE: not used for our solution
+            state2 - a tuple of tuples defining the worker and box locations after the action
+
+        @return:
+            result - the cost of the solution path up to state2 coming from state1
+                     given the action
+        '''
         cost = 0
         for x in range(len(state1[1:])):
             if state1[x+1] != state2[x+1]:
                 cost = self.weights[x]
-        return c + 1 + cost
+        result = c + 1 + cost
+        return result
 
     def h(self, n):
-        '''
-        Heuristic for goal state of the form range(k,-1,1) where k is a positive integer. 
-        h(n) = 1 + the index of the largest pancake that is still out of place
-        '''
+        '''  
+        Uses the state1 and state2 we determine if a box location, stored in all the tuples of the state but the first,
+        has changed between the states and if it has then add the weight of the box to the result variable.
 
+        The result will be a combination of the cost of the previous actions up till state2 (c) + the default cost of an
+        action (1) + the cost of moving a box (if there is one)
+
+        @param:
+            n - a node object (contains the current state)
+
+        @return:
+            completeToGoal - the cost of the solution path up to state2 coming from state1
+                     given the action
+        '''
         playerLocation = n.state[0]
         boxLocation = n.state[1:]
         goalLocation = self.goalLocations
-        maxWorkerToBox = 0
-        maxBoxToGoal = 0
+        
+        #talk about how the exponental issue with more boxes
+        #NOTE: Solution 1 (main solution)
+        #sys.maxsize
+        minWorkerToBox = sys.maxsize
+        minBoxToGoal = sys.maxsize
         completeToGoal = 0
         for x in boxLocation:
             if x not in goalLocation:
                 workerDistance = abs(playerLocation[0] - x[0]) + abs(playerLocation[1] - x[1]) - 1
-                maxWorkerToBox = max(workerDistance, maxWorkerToBox)
+                minWorkerToBox = min(workerDistance, minWorkerToBox)
                 for y in range(len(goalLocation)):
                     boxDistance = abs(x[0] - goalLocation[y][0]) + abs(x[1] - goalLocation[y][1])
                     #boxDistance = boxDistance * self.weights[y]
-                    maxBoxToGoal = min(boxDistance, maxBoxToGoal)
-                    completeToGoal = max(completeToGoal, maxBoxToGoal + maxWorkerToBox)
+                    minBoxToGoal = min(boxDistance, minBoxToGoal)
+                completeToGoal = max(completeToGoal, minBoxToGoal + minWorkerToBox)
+
+        #NOTE: Solution 2 (need to fix)
+        # minWorkerToBox = sys.maxsize
+        # minBoxToGoal = sys.maxsize
+        # combineMinBoxToGoal = 0
+        # completeToGoal = 0
+        # for x in boxLocation:
+        #     if x not in goalLocation:
+        #         workerDistance = abs(playerLocation[0] - x[0]) + abs(playerLocation[1] - x[1]) - 1
+        #         minWorkerToBox = min(workerDistance, minWorkerToBox)
+        #         for y in range(len(goalLocation)):
+        #             boxDistance = abs(x[0] - goalLocation[y][0]) + abs(x[1] - goalLocation[y][1])
+        #             #boxDistance = boxDistance * self.weights[y]
+        #             minBoxToGoal = min(boxDistance, minBoxToGoal)
+        #         combineMinBoxToGoal = combineMinBoxToGoal + minBoxToGoal
+        # #print(combineMinBoxToGoal)
+        # completeToGoal = combineMinBoxToGoal + minWorkerToBox
+
+        #NOTE: Solution 3 (old solution)
+        # maxWorkerToBox = 0
+        # maxBoxToGoal = 0
+        # completeToGoal = 0
+        # for x in boxLocation:
+        #     if x not in goalLocation:
+        #         workerDistance = abs(playerLocation[0] - x[0]) + abs(playerLocation[1] - x[1]) - 1
+        #         maxWorkerToBox = max(workerDistance, maxWorkerToBox)
+        #         for y in range(len(goalLocation)):
+        #             boxDistance = abs(x[0] - goalLocation[y][0]) + abs(x[1] - goalLocation[y][1])
+        #             #boxDistance = boxDistance * self.weights[y]
+        #             maxBoxToGoal = min(boxDistance, maxBoxToGoal)
+        #             completeToGoal = max(completeToGoal, maxBoxToGoal + maxWorkerToBox)
         #print(completeToGoal)
         return completeToGoal
     
@@ -456,26 +631,29 @@ class SokobanPuzzle(search.Problem):
 
 def check_elem_action_seq(warehouse, action_seq):
     '''
-    
     Determine if the sequence of actions listed in 'action_seq' is legal or not.
-    
-    Important notes:
-      - a legal sequence of actions does not necessarily solve the puzzle.
-      - an action is legal even if it pushes a box onto a taboo cell.
-        
-    @param warehouse: a valid Warehouse object
+    This does not nessarily mean solving the puzzle or pushing a box into a taboo cell.
 
-    @param action_seq: a sequence of legal actions.
+    This is purely if the set of actions can be performed legally. The illegal moves are:
+        - If the worker tries to move into a wall
+        - If the worker tries to push a box into another box
+        - If the workers tries to push a box into a wall
+
+    Will return the state if all actions are successful and will return "Impossible" if an action
+    is an illegal move
+
+    @params: 
+        warehouse - a valid Warehouse object
+        action_seq - a sequence of legal actions.
            For example, ['Left', 'Down', Down','Right', 'Up', 'Down']
            
-    @return
-        The string 'Impossible', if one of the action was not valid.
-           For example, if the agent tries to push two boxes at the same time,
-                        or push a box into a wall.
-        Otherwise, if all actions were successful, return                 
-               A string representing the state of the puzzle after applying
-               the sequence of actions.  This must be the same string as the
-               string returned by the method  Warehouse.__str__()
+    @return:
+        result - The string 'Impossible', if one of the action was not valid.
+                    - For example, if the agent tries to push two boxes at the same time,
+                                    or push a box into a wall.
+                Otherwise, if all actions were successful, return                 
+                    A string representing the state of the puzzle after applying
+                    the sequence of actions.
     '''
     wh = SokobanPuzzle(warehouse=warehouse, tabooFlag=1)
     state = wh.initial
@@ -491,38 +669,41 @@ def check_elem_action_seq(warehouse, action_seq):
     worker = worker[::-1]
     boxes =  tuple([x[::-1] for x in state[1:]])
     warehouseFinish = warehouse.copy(worker=worker, boxes=boxes, weights = wh.weights)
-    return warehouseFinish.__str__()
+    result = warehouseFinish.__str__()
+    return result
 
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 def solve_weighted_sokoban(warehouse):
     '''
-    This function analyses the given warehouse.
+    This function analyses the given warehouse. It will use the A Star Graph Search algorithm
+    to search our problem space for a solution that fits our goal state (which is defined by all
+    boxes on a goal/target location).
+
     It returns the two items. The first item is an action sequence solution. 
     The second item is the total cost of this action sequence.
     
-    @param 
-     warehouse: a valid Warehouse object
+    @param:
+        warehouse - a valid Warehouse object
 
-    @return
-    
-        If puzzle cannot be solved 
-            return 'Impossible', None
-        
-        If a solution was found, 
-            return S, C 
-            where S is a list of actions that solves
-            the given puzzle coded with 'Left', 'Right', 'Up', 'Down'
-            For example, ['Left', 'Down', Down','Right', 'Up', 'Down']
-            If the puzzle is already in a goal state, simply return []
-            C is the total cost of the action sequence C
+    @returns:
+        If puzzle cannot be solved
+            answer - a string of "Impossible
+            cost - None
+
+        If a solution was found 
+            answer - A list of actions that solves the puzzle
+                For example: ['Left', 'Down', Down','Right', 'Up', 'Down']
+            cost - The total cost of actions taken to get the solution
+                For example: 26
 
     '''
 
     wh = SokobanPuzzle(warehouse=warehouse)
     wh.tabooCellFinder()
-    #print(wh.tabooCells)
+    # print("Taboo Cells")
+    # print(wh.tabooCells)
     
     #NOTE: Works - Test Action is Correct
     #wh.actions(state=wh.initial)
