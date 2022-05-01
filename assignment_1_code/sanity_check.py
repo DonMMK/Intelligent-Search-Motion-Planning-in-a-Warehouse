@@ -115,7 +115,9 @@ def test_solve_weighted_sokoban():
     # NOTE: second test - Warehouse 3
     wh.load_warehouse( "/Users/don/GitHub/Intelligent-Search-Motion-Planning-in-a-Warehouse/assignment_1_code/warehouses/warehouse_03.txt")
     answer, cost = solve_weighted_sokoban(wh) 
-    expected_answer = ['Up', 'Left'] 
+    expected_answer = ['Right', 'Up', 'Up', 'Left', 'Left', 'Left', 'Up', 'Left', 'Down', 'Right', 'Right', 'Right', 'Right', 'Down', 'Down', 
+                       'Left', 'Up', 'Right', 'Up', 'Left', 'Left', 'Left', 'Down', 'Down', 'Left', 'Left', 'Left', 'Up', 'Up', 'Right', 'Right', 'Down', 
+                       'Right', 'Down', 'Left', 'Up', 'Up', 'Up', 'Right', 'Down', 'Down'] 
     expected_cost = 1
 
     print('<<  test_solve_weighted_sokoban >>')
@@ -136,6 +138,6 @@ def test_solve_weighted_sokoban():
 if __name__ == "__main__":
     pass    
     #print(my_team())  # should print your team
-    test_taboo_cells() 
+    #test_taboo_cells() 
     #test_check_elem_action_seq()
-    #test_solve_weighted_sokoban()
+    test_solve_weighted_sokoban()
