@@ -617,7 +617,6 @@ class SokobanPuzzle(search.Problem):
                 - Within these subproblems, the heuristic is admissible and consistent
                     - NOTE: that is means however that for the larger problem as a whole the heuristic
                             is not consistent, this consistency is the main issue with multi-goal problems
-    
 
         @param:
             n - a node object (contains the current state)
