@@ -118,7 +118,7 @@ def test_solve_weighted_sokoban():
     expected_answer = ['Right', 'Up', 'Up', 'Left', 'Left', 'Left', 'Up', 'Left', 'Down', 'Right', 'Right', 'Right', 'Right', 'Down', 'Down', 
                        'Left', 'Up', 'Right', 'Up', 'Left', 'Left', 'Left', 'Down', 'Down', 'Left', 'Left', 'Left', 'Up', 'Up', 'Right', 'Right', 'Down', 
                        'Right', 'Down', 'Left', 'Up', 'Up', 'Up', 'Right', 'Down', 'Down'] 
-    expected_cost = 1
+    expected_cost = 41
 
     print('<<  test_solve_weighted_sokoban >>')
     if answer==expected_answer:
